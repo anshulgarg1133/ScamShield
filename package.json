@@ -1,0 +1,31 @@
+{
+  "name": "scamshield-backend",
+  "version": "1.0.0",
+  "description": "ScamShield - AI Scam/Fraud Message Detector Backend (BUILD WITH भारत 2.0)",
+  "main": "src/index.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/index.js",
+    "dev": "node --watch src/index.js",
+    "test": "node test/test-api.js",
+    "test:real": "node test/test-real-scams.js"
+  },
+  "keywords": [
+    "scam-detection",
+    "cybersecurity",
+    "gemini",
+    "supabase",
+    "india-cybercrime",
+    "multimodal"
+  ],
+  "author": "Team ScamStop",
+  "license": "MIT",
+  "dependencies": {
+    "@google/generative-ai": "^0.24.0",
+    "@supabase/supabase-js": "^2.49.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "multer": "^1.4.5-lts.1"
+  }
+}
