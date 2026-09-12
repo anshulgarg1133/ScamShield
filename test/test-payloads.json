@@ -1,0 +1,62 @@
+{
+  "test_cases": [
+    {
+      "name": "SBI KYC Phishing (High Risk)",
+      "payload": {
+        "text": "Dear Customer, Your SBI NetBanking account is suspended due to incomplete KYC. Update your PAN immediately to avoid permanent deactivation: http://sbi-kyc-verify.top",
+        "sender": "+91 98123 45678",
+        "language": "hi"
+      },
+      "expected": {
+        "risk_level": "HIGH",
+        "category": "BANK_KYC_PHISHING"
+      }
+    },
+    {
+      "name": "Electricity Disconnection Threat (High Risk)",
+      "payload": {
+        "text": "Dear Consumer, Your electricity connection will be disconnected tonight at 9:30 PM from the power office because your previous bill was not updated. Please immediately contact our officer at 9876543210.",
+        "sender": "+91 98765 43210",
+        "language": "hi"
+      },
+      "expected": {
+        "risk_level": "HIGH",
+        "category": "ELECTRICITY_BILL_SCAM"
+      }
+    },
+    {
+      "name": "Work From Home / Task Scam (High Risk)",
+      "payload": {
+        "text": "Earn ₹3000 to ₹8000 daily from home! Just like YouTube videos and rate 5-star on Google Maps. No investment required. Join our HR team on Telegram: t.me/official_hr_pay to start.",
+        "sender": "+91 70123 45678",
+        "language": "en"
+      },
+      "expected": {
+        "risk_level": "HIGH",
+        "category": "JOB_OFFER_SCAM"
+      }
+    },
+    {
+      "name": "Emotional Manipulation / Emergency Scam (High Risk)",
+      "payload": {
+        "text": "Hi uncle, I am in big trouble and met with an accident in Delhi. I need ₹5000 urgently for hospital deposit. Please send immediately on this UPI ID: hospital.help@paytm. Don't call mom now.",
+        "sender": "+91 91234 56789",
+        "language": "hi"
+      },
+      "expected": {
+        "risk_level": "HIGH"
+      }
+    },
+    {
+      "name": "Legitimate Bank Debit Alert (Low Risk / Safe)",
+      "payload": {
+        "text": "INR 350.00 debited from A/C XX1234 on 11-Sep-26 via UPI txn to ZOMATO FOODS. UPI Ref 425512345678. Avail Bal: INR 14,230.50 - HDFC Bank.",
+        "sender": "AD-HDFCBK",
+        "language": "en"
+      },
+      "expected": {
+        "risk_level": "LOW"
+      }
+    }
+  ]
+}
