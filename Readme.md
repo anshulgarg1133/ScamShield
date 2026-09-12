@@ -1,4 +1,4 @@
-# 🛡️ ScamShield Backend — AI Scam/Fraud Message Detector
+# 🛡️ ScamShield — AI Scam & Fraud Message Detector
 
 > **Hackathon**: BUILD WITH भारत 2.0 (National Level Hackathon)  
 > **Team Name**: ScamStop  
@@ -8,191 +8,261 @@
 
 ---
 
-## 📖 Overview
+## 📖 1. Overview & Problem Statement
 
-**ScamShield** protects everyday Indian citizens—especially first-time UPI users, semi-literate, and elderly populations in Tier-2/3 India—from financial fraud. 
+Digital payment fraud in India has surged **41x in five years**, nearing **₹23,000 crore** (RBI Annual Report 2025–26), with over **28 lakh cyber fraud cases** reported on the National Cyber Crime Reporting Portal in 2025 alone.
 
-Users can paste a suspicious **SMS, WhatsApp, or Email message** or upload a **screenshot**. ScamShield evaluates **10 critical fraud signals** using **Google Gemini Flash**, provides plain-language explanations in **English and Hindi**, and logs reports to a **Supabase community pattern database** ("Trending Scams This Week") so individual protection strengthens collective defense.
+Victims are disproportionately **first-time internet/UPI users, elderly citizens, and residents of Tier-2/3 cities** in Bharat who are least served by English-only, technical security tools.
+
+### The Gap in Existing Tools:
+- **Truecaller / Carrier Spam Filters**: Silently block or flag known phone numbers using reactive blocklists. They **do not explain why** a message is dangerous, and they cannot catch new scams from fresh virtual numbers.
+- **CyberDost**: Provides static cybersecurity advisories, not instant, real-time AI analysis.
+
+### The ScamShield Solution:
+**"Paste it. Scan it. Understand it. Stay protected."**
+ScamShield is an instant, multimodal AI fraud detector tailored for India. Users paste an SMS, WhatsApp message, email, or upload a screenshot. In under 2 seconds, ScamShield evaluates **10 behavioral fraud signals**, explains the danger in **plain Hindi and English**, offers actionable safety advice (e.g. calling **1930**), and logs the pattern to a **shared Supabase community intelligence network** so individual defense strengthens collective protection.
 
 ---
 
-## 🏛️ Architecture & Dataflow
+## 🏛️ 2. Full-Stack Architecture
 
 ```mermaid
-flowchart LR
-    User["📱 User (SMS / WhatsApp / Screenshot)"] --> Frontend["💻 React Frontend (Vercel)"]
-    Frontend -->|"POST /api/analyze"| Express["⚡ Express Backend Proxy"]
+flowchart TD
+    User["📱 User (SMS / WhatsApp / Screenshot)"] --> Frontend["💻 React / Vite Frontend (Port 5173)"]
+    Frontend -->|"POST /api/analyze (JSON or Multipart)"| Express["⚡ Express.js Backend (Port 5001)"]
     
     subgraph Backend Pipeline
-        Multer["Multer (Memory Buffer)"] --> Gemini["Gemini Flash (Multimodal)"]
-        Gemini -->|"Strict JSON Output"| SignalEngine["10 Fraud Signals Evaluator"]
+        Multer["Multer (In-Memory Buffer)"] --> Gemini["Google Gemini Flash (Multimodal)"]
+        Gemini -->|"Strict JSON Schema Output"| SignalEngine["10-Signal Fraud Reasoning Engine"]
         SignalEngine --> Logger["Supabase Threat Logger"]
-        SignalEngine -.->|"Quota / Network Fallback"| SafetyNet["Zero-Crash Heuristic Net"]
+        SignalEngine -.->|"Rate-limit / Quota Fallback"| Fallback["Zero-Crash Heuristic Safety Net"]
     end
     
     Express --> Multer
-    Logger --> SupaDB[("🗄️ Supabase PostgreSQL")]
+    Logger -->|"Insert Scan"| SupaReports[("🗄️ public.scam_reports")]
+    Logger -->|"Increment Frequency"| SupaPatterns[("🗄️ public.known_patterns")]
     Express -->|"Typed Verdict JSON"| Frontend
-    SupaDB -->|"GET /api/feed (Trending Scams)"| Frontend
+    SupaReports -->|"GET /api/feed"| Frontend
+    SupaPatterns -->|"GET /api/feed/patterns"| Frontend
 ```
 
 ---
 
-## 🔍 The 10 Fraud Signals Evaluated
+## 🔍 3. The 10 Fraud Signals Evaluated
 
-Gemini Flash and the backend engine strictly evaluate the message against 10 specific signals:
+ScamShield evaluates the underlying psychological intent and mechanics of fraud rather than relying on phone number blocklists:
 
-| # | Signal | Description & Indian Context Example |
+| # | Signal | Description & Indian Cybercrime Example |
 |---|---|---|
 | 1 | **Urgency** | *"Act within 10 minutes"*, *"Electricity cut tonight at 9:30 PM"* |
 | 2 | **Authority Impersonation** | Posing as *"RBI Notice"*, *"SBI / HDFC"*, *"Income Tax Dept"*, *"Police"* |
 | 3 | **Financial Request** | *"Pay ₹500 processing fee"*, *"Deposit money to claim loan"* |
 | 4 | **OTP Request** | *"Send OTP to verify"*, *"Share 6-digit code received"* |
-| 5 | **Suspicious URL** | Non-bank domains (*.xyz, .top, .app, bit.ly, fake netbanking URLs*) |
+| 5 | **Suspicious URL** | Non-bank domains (*.xyz, .top, .app, bit.ly, fake banking links*) |
 | 6 | **Reward Bait** | *"You have won ₹10 Lakhs in KBC"*, *"Earn ₹5000/day liking YouTube videos"* |
 | 7 | **Threat** | *"Account will be blocked"*, *"Arrest warrant issued"*, *"SIM deactivated"* |
 | 8 | **Emotional Manipulation** | *"Emergency, hospital payment needed"*, *"Friend in urgent distress"* |
 | 9 | **Credential Request** | Asking for netbanking password, UPI PIN, ATM card CVV/expiry |
-| 10 | **Sender Mismatch** | Claimed bank notice sent from personal mobile number (`+91 98xxx`) instead of approved DLT header (`VM-SBIINB`) |
+| 10 | **Sender Mismatch** | Claimed bank notice sent from personal mobile (`+91 98xxx`) instead of approved DLT header (`VM-SBIINB`) |
 
 ---
 
-## 📁 Repository Structure
+## 📁 4. Project Directory Layout
 
 ```
-ScamShield-1/
-├── package.json               # ES Modules, scripts, dependencies
-├── .env.example               # Template for environment variables
-├── .env                       # Local secrets (ignored in git)
-├── .gitignore
-├── Readme.md                  # Complete guide and frontend contracts
-├── supabase/
-│   └── schema.sql             # Supabase table, RLS policies & seed scams
-├── src/
-│   ├── index.js               # Express app bootstrap & CORS setup
+ScamShield/
+├── frontend/                  # 💻 React / Vite Frontend Application (Aashnee)
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.js
+│   └── src/
+│       ├── App.jsx            # Main Scanner UI & Result Card
+│       ├── App.css            # Dark cybersecurity theme & styling
+│       └── main.jsx
+│
+├── src/                       # ⚡ Node.js / Express Backend (Anshul)
+│   ├── index.js               # Express server entrypoint & CORS config
 │   ├── config/
 │   │   ├── env.js             # Environment variable validator
-│   │   └── supabase.js        # Supabase client + in-memory fallback
+│   │   └── supabase.js        # Supabase client & in-memory fallback
 │   ├── constants/
-│   │   ├── schemas.js         # Gemini Flash strict JSON schema
-│   │   └── prompts.js         # Few-shot prompts tuned for Indian fraud
+│   │   ├── schemas.js         # Gemini Flash strict JSON Schema
+│   │   └── prompts.js         # Few-shot prompts for Indian fraud
 │   ├── services/
 │   │   ├── gemini.service.js   # Multimodal Gemini Flash AI service
 │   │   ├── fallback.service.js # Zero-crash heuristic safety net (Demo defense)
 │   │   └── feed.service.js     # Supabase query handler & stats aggregator
 │   ├── middleware/
-│   │   ├── upload.middleware.js # Multer screenshot handler (memory storage)
+│   │   ├── upload.middleware.js # Multer screenshot memory storage (5MB max)
 │   │   └── error.middleware.js  # Global error & 404 handler
 │   ├── controllers/
 │   │   ├── analyze.controller.js # POST /api/analyze controller
-│   │   └── feed.controller.js    # GET /api/feed & POST /api/report
+│   │   └── feed.controller.js    # GET /api/feed, /patterns & /stats
 │   └── routes/
 │       ├── analyze.routes.js   # /api/analyze
 │       ├── feed.routes.js      # /api/feed
 │       └── health.routes.js    # /api/health
-└── test/
-    ├── test-payloads.json     # Test cases (SBI KYC, Electricity, Safe Bank SMS)
-    └── test-api.js            # Automated test runner (7/7 passing)
+│
+├── supabase/                  # 🗄️ Supabase PostgreSQL Database (Divishi)
+│   └── schema.sql             # SQL table schema, RLS policies, & seed data
+├── test/                      # 🧪 Automated Test Suites
+│   ├── test-api.js            # End-to-end integration test runner (8/8 passing)
+│   ├── test-real-scams.js     # Live test suite with 5 real Indian fraud cases
+│   └── test-payloads.json     # Sample payloads (SBI KYC, Electricity, Safe SMS)
+├── .env.example               # Template for environment configuration
+├── package.json               # Backend dependencies and test scripts
+└── Readme.md                  # Complete project documentation
 ```
 
 ---
 
-## 🚀 Quickstart Guide
+## 🚀 5. Getting Started (Step-by-Step)
 
-### 1. Install Dependencies
+### Step 1: Clone the Repository
 ```bash
-npm install
+git clone https://github.com/anshulgarg1133/ScamShield.git
+cd ScamShield
 ```
 
-### 2. Configure Environment Variables
-Copy `.env.example` to `.env`:
+---
+
+### Step 2: Configure Backend Environment Variables
+Create your `.env` file at the root:
 ```bash
 cp .env.example .env
 ```
-Edit `.env`:
+Open `.env` and fill in your keys:
 ```env
 PORT=5001
 NODE_ENV=development
 FRONTEND_URL=http://localhost:3000,http://localhost:5173
 
-# AI Studio Gemini Key (free from https://aistudio.google.com/app/apikey)
+# Google Gemini API Key (from https://aistudio.google.com/app/apikey)
 GEMINI_API_KEY=your_gemini_api_key_here
 
-# Supabase Credentials (optional for local demo; has in-memory fallback)
+# Supabase Credentials (from Supabase Dashboard -> Project Settings -> API)
 SUPABASE_URL=https://your-project.supabase.co
 SUPABASE_ANON_KEY=your_supabase_anon_key_here
 ```
+*(Note: If keys are omitted, the backend automatically runs in **Zero-Crash Fallback Mode** with mock data so the app never crashes!)*
 
-### 3. Run Development Server
+---
+
+### Step 3: Run the Backend Server
+Open **Terminal 1** at the project root:
 ```bash
+# Install backend dependencies
+npm install
+
+# Start backend in watch mode
 npm run dev
 ```
+Your backend will start on: **`http://localhost:5001`**  
+Check health: `curl http://localhost:5001/api/health`
 
-### 4. Run Automated Tests
+---
+
+### Step 4: Run the Frontend
+Open **Terminal 2**:
 ```bash
-npm test
+cd frontend
+
+# Install frontend dependencies
+npm install
+
+# Start Vite React dev server
+npm run dev
+```
+Your frontend will start on: **`http://localhost:5173`**  
+Open it in your browser, paste a suspicious message or upload a screenshot, and click **Analyze message**!
+
+---
+
+## 🗄️ 6. Supabase Setup & RLS Policy (For Divishi)
+
+If you are setting up or fixing the database tables in Supabase, run this in the **Supabase SQL Editor**:
+
+```sql
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- 1. scam_reports table
+CREATE TABLE IF NOT EXISTS public.scam_reports (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    message_text TEXT NOT NULL,
+    scam_type TEXT NOT NULL DEFAULT 'None',
+    risk_level TEXT NOT NULL DEFAULT 'Low', -- 'Low', 'Medium', 'High'
+    scam_probability NUMERIC(4, 2) NOT NULL DEFAULT 0.00, -- 0.00 to 1.00
+    language TEXT NOT NULL DEFAULT 'English',
+    source TEXT NOT NULL DEFAULT 'sms', -- 'sms', 'whatsapp', 'email', 'screenshot'
+    verdict_reason TEXT,
+    reported_at TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 2. known_patterns table (Grows smarter over time)
+CREATE TABLE IF NOT EXISTS public.known_patterns (
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+    pattern_text TEXT NOT NULL,
+    scam_type TEXT NOT NULL,
+    frequency_count INT4 NOT NULL DEFAULT 1,
+    last_seen TIMESTAMPTZ NOT NULL DEFAULT now()
+);
+
+-- 3. Row Level Security (RLS) Policies
+ALTER TABLE public.scam_reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.known_patterns ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Allow public insert on scam_reports" ON public.scam_reports FOR INSERT WITH CHECK (true);
+CREATE POLICY "Allow public select on scam_reports" ON public.scam_reports FOR SELECT USING (true);
+
+CREATE POLICY "Allow public all on known_patterns" ON public.known_patterns FOR ALL USING (true);
 ```
 
 ---
 
-## 🔌 API Endpoints & Frontend Contract
+## 🔌 7. API Reference & Contract
 
 ### 1. `POST /api/analyze` — Analyze Message or Screenshot
-Accepts either `application/json` OR `multipart/form-data` (with image file).
+- **Content-Type**: `application/json` (for text) OR `multipart/form-data` (for screenshots).
+- **Accepted Fields**:
+  - `text`: String (message body)
+  - `image`: File (`png`, `jpg`, `jpeg`, `webp` up to 5MB)
+  - `sender`: String (e.g. `+91 98123 45678`)
+  - `language`: String (`"hi"` or `"en"`)
+  - `source`: String (`"sms"`, `"whatsapp"`, `"email"`, `"screenshot"`)
 
-#### Request (JSON)
-```json
-{
-  "text": "Dear SBI Customer, Your account is suspended. Update KYC here: http://sbi-kyc-verify.top",
-  "sender": "+91 98123 45678",
-  "language": "hi"
-}
-```
-
-#### Request (Multipart/Form-Data for Screenshot)
-- Field `image`: File (PNG, JPEG, WEBP up to 5MB)
-- Field `sender`: string (optional, e.g. `+91 98123 45678`)
-- Field `language`: string (optional, `hi` or `en`)
-
-#### Guaranteed Structured Response (`200 OK`)
+#### Example Response (`200 OK`):
 ```json
 {
   "success": true,
   "data": {
-    "scam_probability": 95,
+    "scam_probability": 98,
     "risk_level": "HIGH",
     "category": "BANK_KYC_PHISHING",
     "summary": {
-      "en": "Fake SBI KYC update phishing link aimed at stealing online banking credentials.",
+      "en": "Fake SBI KYC update phishing scam aimed at stealing netbanking credentials.",
       "hi": "भारतीय स्टेट बैंक (SBI) के नाम पर फर्जी केवाईसी लिंक जो आपके बैंक खाते को चुराने के लिए बनाया गया है।"
     },
     "signals": [
       {
         "signal": "Urgency",
         "detected": true,
-        "evidence": "account is suspended",
-        "explanation": "Creates panic to force quick action without verification."
+        "evidence": "will be blocked today",
+        "explanation": "Forces immediate action to bypass critical thinking."
       },
       {
         "signal": "Authority impersonation",
         "detected": true,
         "evidence": "Dear SBI Customer",
-        "explanation": "Pretends to be State Bank of India."
+        "explanation": "Posing as State Bank of India."
       },
       {
         "signal": "Suspicious URL",
         "detected": true,
-        "evidence": "http://sbi-kyc-verify.top",
-        "explanation": "SBI never uses .top domains. Official domain is onlinesbi.sbi."
-      },
-      {
-        "signal": "Sender mismatch",
-        "detected": true,
-        "evidence": "Sent from standard mobile number +91 98123 45678",
-        "explanation": "Official banks only send SMS from registered 6-character sender headers."
+        "evidence": "http://sbi-kyc-update.xyz",
+        "explanation": "Uses an unverified .xyz domain instead of official onlinesbi.sbi."
       }
     ],
-    "reasoning": "Combines urgency, bank impersonation, and an unverified .top domain from a private mobile number.",
+    "reasoning": "The message exhibits 6 high-risk fraud signals: authority impersonation (SBI), threat of account closure, artificial urgency, and an unverified suspicious .xyz URL.",
     "actionable_advice": {
       "en": [
         "DO NOT click the link.",
@@ -206,7 +276,7 @@ Accepts either `application/json` OR `multipart/form-data` (with image file).
       ]
     },
     "is_safe_to_interact": false,
-    "extracted_text": "Dear SBI Customer, Your account is suspended. Update KYC here: http://sbi-kyc-verify.top",
+    "extracted_text": "Dear Customer, your SBI account is blocked. Update KYC at http://sbi-kyc-update.xyz immediately.",
     "fallback_mode": false
   }
 }
@@ -214,115 +284,59 @@ Accepts either `application/json` OR `multipart/form-data` (with image file).
 
 ---
 
-### 2. `GET /api/feed` — Community Scam Reports
-Fetches recent scam reports directly from Divishi's `public.scam_reports` table:
-```json
-{
-  "success": true,
-  "count": 3,
-  "data": [
-    {
-      "id": "c4414e13-3581-4731-9c90-e58b21377a01",
-      "message_text": "Dear Customer, your Account KYC is Pending. Click http://sbi-kyc-update.xyz to update immediately.",
-      "scam_type": "Fake KYC",
-      "risk_level": "High",
-      "scam_probability": 0.94,
-      "language": "English",
-      "source": "sms",
-      "verdict_reason": "Urgent tone, shortened suspicious link, fake banking KYC impersonation",
-      "reported_at": "2026-09-10T17:30:59.564Z"
-    }
-  ]
-}
+### 2. `GET /api/feed` — Recent Community Scams
+Returns recent scam reports from Supabase `public.scam_reports`:
+```bash
+curl http://localhost:5001/api/feed?limit=5
+```
+
+### 3. `GET /api/feed/patterns` — Trending Fraud Signatures
+Returns active scam campaigns from Supabase `public.known_patterns` sorted by frequency:
+```bash
+curl http://localhost:5001/api/feed/patterns
+```
+
+### 4. `GET /api/feed/stats` — Threat Intelligence Metrics
+Returns aggregated metrics for the dashboard counters (total scans, scam rate %, category breakdown):
+```bash
+curl http://localhost:5001/api/feed/stats
 ```
 
 ---
 
-### 3. `GET /api/feed/patterns` — Known Scam Patterns ("Grows Smarter")
-Fetches active fraud campaigns and their frequency from Divishi's `public.known_patterns` table:
-```json
-{
-  "success": true,
-  "count": 3,
-  "data": [
-    {
-      "id": "4a32cf5a-5c0e-44af-8999-ee65cd250001",
-      "pattern_text": "Lottery winning bank details",
-      "scam_type": "Lottery",
-      "frequency_count": 15,
-      "last_seen": "2026-09-10T17:28:14.456Z"
-    },
-    {
-      "id": "b2dc1a66-adf8-4330-acdd-83b7e19c0002",
-      "pattern_text": "KYC update urgent link",
-      "scam_type": "Fake KYC",
-      "frequency_count": 12,
-      "last_seen": "2026-09-10T17:28:14.456Z"
-    },
-    {
-      "id": "481dcb2a-c6ca-4769-9854-cea79f1f0003",
-      "pattern_text": "Refund request via AnyDesk",
-      "scam_type": "UPI Refund",
-      "frequency_count": 8,
-      "last_seen": "2026-09-10T17:28:14.456Z"
-    }
-  ]
-}
+## 🧪 8. Testing & Verification
+
+### Run Automated Integration Tests (8/8 checks):
+```bash
+npm test
 ```
+Tests health check, fake KYC scam, genuine bank debit alert, screenshot uploads, community feed, and stats.
+
+### Run Live Real-World Fraud Scenarios (Gemini AI):
+```bash
+npm run test:real
+```
+Tests 5 live cases:
+1. Fake SBI YONO KYC Phishing (`98% High Risk`)
+2. Electricity Cutoff Scam at 9:30 PM (`98% High Risk`)
+3. Telegram YouTube-Like Job Scam (`98% High Risk`)
+4. KBC Lottery WhatsApp Scam from `+92` foreign code (`100% High Risk`)
+5. Genuine HDFC Bank Swiggy Debit SMS (`0% Low Risk / Safe`)
 
 ---
 
-### 4. `GET /api/feed/stats` — Live Threat Intelligence Metrics
-Returns aggregated stats for dashboard counters:
-```json
-{
-  "success": true,
-  "data": {
-    "total_scans_logged": 42,
-    "scams_flagged_count": 38,
-    "scam_detection_rate_pct": 90,
-    "scam_type_breakdown": {
-      "Fake KYC": 20,
-      "Fake Job": 12,
-      "UPI Refund": 6
-    },
-    "top_known_patterns": [
-      {
-        "pattern_text": "Lottery winning bank details",
-        "scam_type": "Lottery",
-        "frequency_count": 15
-      }
-    ]
-  }
-}
-```
+## 🛡️ 9. Hackathon Zero-Crash Resilience ("Demo Insurance")
+
+During live presentations, third-party APIs can experience rate limits (`429`) or temporary outages (`503`).
+
+**How ScamShield guarantees your live demo NEVER crashes:**
+1. **Heuristic Safety Net (`src/services/fallback.service.js`)**: If Gemini is unreachable, rate-limited, or throws an error, the backend intercepts the exception and runs a local regex pattern engine across all 10 signals, returning the **identical JSON schema** with `fallback_mode: true`. The user and frontend never receive a 500 error!
+2. **In-Memory Store (`src/config/supabase.js`)**: If Supabase credentials are missing or RLS blocks writes, the server caches reports in memory so the trending feed continues uninterrupted.
 
 ---
 
-### 4. `POST /api/feed/report` — Manual Community Scam Report
-Allows users or admins to flag an unverified number or message:
-```json
-{
-  "message_text": "Received APK file on WhatsApp claiming to be PM Kisan 17th installment scheme",
-  "sender_info": "+91 8899001122",
-  "category": "IMPERSONATION",
-  "notes": "APK contains trojan permissions"
-}
-```
+## 👥 10. Team Roles & Contributions
 
----
-
-### 5. `GET /api/health` — Service Health Check
-```json
-{
-  "status": "healthy",
-  "service": "ScamShield Backend",
-  "uptime": 120,
-  "gemini_ai": "Configured (Gemini Flash)",
-  "database": "Connected (Supabase)"
-}
-```
-
----
-
-
+- **Aashnee Sethi**: Frontend engineering, React UI, dark mode styling, and bilingual Hindi/English toggle.
+- **Anshul Garg**: Backend engineering, Node.js/Express architecture, Gemini Flash multimodal pipeline, 10-signal reasoning engine, and Zero-Crash fallback.
+- **Divishi Chaudhary**: Database architecture, Supabase PostgreSQL schema (`scam_reports` & `known_patterns`), RLS policies, and seed data.
